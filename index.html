@@ -281,136 +281,160 @@
 
     let codeFlowInterval;
 
+    // Your Vercel proxy base URL (no trailing slash, keep the /api/proxy?url=)
+    const proxyBase = 'https://YOUR_VERCEL_PROJECT.vercel.app/api/proxy?url=';
+
     function updateBars() {
       const value = input.value.trim();
       const hasProtocol = value.startsWith("http://") || value.startsWith("https://");
       const hasValidDomain = fullDomains.some(domain => value.endsWith(domain));
 
       for (let i = 0; i < bars.length; i++) {
-        if (hasProtocol && hasValidDomain) {
-          bars[i].style.width = "100%";
-        } else {
-          const base = Math.min(value.length / 50, 1) * 100;
-          bars[i].style.width = base * ((i + 1) / bars.length) + "%";
+        let fillWidth = 0;
+        if (value.length > 0) {
+          fillWidth = Math.min(100, (value.length * 2) + (hasProtocol ? 10 : 0));
+          if (hasValidDomain) fillWidth += 20;
+          fillWidth = Math.min(100, fillWidth);
         }
+        bars[i].style.width = fillWidth + "%";
+      }
+
+      if (value.length === 0) {
+        status.textContent = "GoGard++";
+      } else if (!hasProtocol) {
+        status.textContent = "Remember to start with http:// or https://";
+      } else if (!hasValidDomain) {
+        status.textContent = "Make sure to include a valid domain like .com or .net";
+      } else {
+        status.textContent = "Press Enter to open";
       }
     }
 
-    function checkEnter(e) {
-      if (e.key === "Enter") startOpenSequence(input.value.trim());
+    function expandInput() {
+      input.style.transform = "scale(1.05)";
+      input.style.backgroundColor = "#262626";
     }
 
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Tab") {
-        e.preventDefault();
+    function shrinkInput() {
+      input.style.transform = "scale(1)";
+      input.style.backgroundColor = "#1a1a1a";
+    }
+
+    function checkEnter(event) {
+      if (event.key === "Enter") {
         const val = input.value.trim();
-        if ((val.startsWith("http://") || val.startsWith("https://")) && presetSites.length > 0) {
-          openPresetModal();
+
+        if (val.length === 0) return;
+
+        if (!val.startsWith("http://") && !val.startsWith("https://")) {
+          alert("Please start your URL with http:// or https://");
+          return;
+        }
+
+        const hasValidDomain = fullDomains.some(domain => val.endsWith(domain));
+        if (!hasValidDomain) {
+          alert("URL should end with a valid domain like .com, .net, .org etc.");
+          return;
+        }
+
+        // Proxy check for (prox)
+        if (val.toLowerCase().endsWith("(prox)")) {
+          const urlWithoutProxy = val.slice(0, -6);
+          openWithProxy(urlWithoutProxy);
         } else {
-          alert("Please type a valid full URL before viewing presets.");
+          openDirect(val);
         }
       }
-    });
+    }
 
+    function openWithProxy(targetUrl) {
+      // Encode the target URL for safe transmission in query param
+      const encodedUrl = encodeURIComponent(targetUrl);
+      const proxiedUrl = proxyBase + encodedUrl;
+
+      runLoadingAnimation(() => {
+        window.open(proxiedUrl, "_blank");
+      });
+    }
+
+    function openDirect(targetUrl) {
+      runLoadingAnimation(() => {
+        window.open(targetUrl, "_blank");
+      });
+    }
+
+    function runLoadingAnimation(callback) {
+      loadingBars.classList.remove("squish");
+      codeFlow.style.display = "block";
+      finalLoading.style.display = "none";
+      codeFlow.textContent = "";
+      let phraseIndex = 0;
+
+      if (codeFlowInterval) clearInterval(codeFlowInterval);
+
+      codeFlowInterval = setInterval(() => {
+        if (phraseIndex >= hackerPhrases.length) {
+          clearInterval(codeFlowInterval);
+          startFinalLoading(callback);
+          return;
+        }
+        codeFlow.textContent += hackerPhrases[phraseIndex] + "\n";
+        codeFlow.scrollTop = codeFlow.scrollHeight;
+        phraseIndex++;
+      }, 350);
+    }
+
+    function startFinalLoading(callback) {
+      finalLoading.style.display = "block";
+      finalLoadingFill.style.width = "0%";
+
+      // Animate final loading bar fill over 1.5s
+      setTimeout(() => {
+        finalLoadingFill.style.width = "100%";
+      }, 50);
+
+      // After animation completes, run callback and reset UI
+      setTimeout(() => {
+        loadingBars.classList.add("squish");
+        codeFlow.style.display = "none";
+        finalLoading.style.display = "none";
+        finalLoadingFill.style.width = "0%";
+        callback();
+      }, 1700);
+    }
+
+    // Preset modal functions
     function openPresetModal() {
+      presetModal.style.display = "flex";
       presetList.innerHTML = "";
       presetSites.forEach(site => {
-        const btn = document.createElement("div");
-        btn.className = "presetButton";
+        const btn = document.createElement("button");
         btn.textContent = site.name;
+        btn.className = "presetButton";
         btn.onclick = () => {
+          input.value = site.url;
+          updateBars();
           closePresetModal();
-          startOpenSequence(site.url);
         };
         presetList.appendChild(btn);
       });
-      presetModal.style.display = "flex";
     }
 
     function closePresetModal() {
       presetModal.style.display = "none";
     }
 
-    function startOpenSequence(url) {
-      if (!url.startsWith("http://") && !url.startsWith("https://")) {
-        alert("Please enter a full URL starting with http:// or https://");
-        return;
+    // For convenience, open preset modal on Ctrl+P (for example)
+    document.addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.key === "p") {
+        e.preventDefault();
+        openPresetModal();
       }
+    });
 
-      input.disabled = true;
-      input.style.opacity = 0.3;
-      loadingBars.classList.remove("squish");
+    // Initialize bars on load
+    updateBars();
 
-      bars.forEach(bar => bar.style.width = "0%");
-      let barIndex = 0;
-
-      function fillNextBar() {
-        if (barIndex >= bars.length) {
-          loadingBars.classList.add("squish");
-          startCodeFlowAnimation(url);
-          return;
-        }
-        bars[barIndex].style.width = "100%";
-        barIndex++;
-        setTimeout(fillNextBar, 350);
-      }
-
-      fillNextBar();
-    }
-
-    function startCodeFlowAnimation(url) {
-      codeFlow.style.display = "block";
-      input.style.display = "none";
-      let index = 0;
-
-      codeFlowInterval = setInterval(() => {
-        if (index >= hackerPhrases.length) {
-          clearInterval(codeFlowInterval);
-          showFinalLoading(url);
-          return;
-        }
-        codeFlow.textContent += hackerPhrases[index++] + "\n";
-        codeFlow.scrollTop = codeFlow.scrollHeight;
-      }, 200);
-    }
-
-    function showFinalLoading(url) {
-      finalLoading.style.display = "block";
-      finalLoadingFill.style.width = "0%";
-      setTimeout(() => finalLoadingFill.style.width = "100%", 100);
-      setTimeout(() => {
-        openIframeWindow(url);
-        resetUI();
-      }, 1800);
-    }
-
-    function openIframeWindow(url) {
-      const win = window.open("about:blank", "_blank");
-      if (!win) return alert("Popup blocked. Allow popups for this site.");
-      win.document.write(`
-        <html><body style="margin:0;">
-        <iframe src="${url}" frameborder="0" style="width:100vw;height:100vh;"></iframe>
-        </body></html>
-      `);
-    }
-
-    function resetUI() {
-      input.disabled = false;
-      input.style.opacity = 1;
-      input.style.display = "block";
-      input.value = "";
-      loadingBars.classList.remove("squish");
-      bars.forEach(bar => bar.style.width = "0%");
-      codeFlow.style.display = "none";
-      codeFlow.textContent = "";
-      finalLoading.style.display = "none";
-      finalLoadingFill.style.width = "0%";
-      status.textContent = "URl TO BYPASS";
-      input.focus();
-    }
-
-    function expandInput() { input.style.width = "85%"; }
-    function shrinkInput() { input.style.width = "80%"; }
   </script>
 </body>
 </html>
