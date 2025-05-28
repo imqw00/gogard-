@@ -1,27 +1,45 @@
 import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
-  try {
-    const targetUrl = req.query.url;
-    if (!targetUrl) {
-      res.status(400).json({ error: 'Missing url parameter' });
-      return;
-    }
+  const { url } = req.query;
+  if (!url) {
+    return res.status(400).json({ error: 'Missing url query parameter' });
+  }
 
-    const response = await fetch(targetUrl, {
-      method: req.method,
-      headers: req.headers,
-      body: req.method === 'GET' ? null : JSON.stringify(req.body),
+  try {
+    // Validate URL
+    const targetUrl = new URL(url);
+
+    // Fetch the target URL
+    const response = await fetch(targetUrl);
+
+    // Set headers except forbidden ones
+    res.status(response.status);
+    response.headers.forEach((value, key) => {
+      if (
+        [
+          'content-encoding',
+          'content-length',
+          'transfer-encoding',
+          'connection',
+          'keep-alive',
+          'proxy-authenticate',
+          'proxy-authorization',
+          'te',
+          'trailer',
+          'upgrade',
+        ].includes(key.toLowerCase())
+      ) {
+        return;
+      }
+      res.setHeader(key, value);
     });
 
-    const data = await response.text();
-
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-    res.status(response.status).send(data);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    // Stream response body
+    const data = await response.arrayBuffer();
+    res.send(Buffer.from(data));
+  } catch (err) {
+    console.error('Proxy error:', err);
+    res.status(500).json({ error: 'Proxy fetch failed', message: err.message });
   }
 }
