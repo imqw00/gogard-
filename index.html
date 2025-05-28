@@ -322,28 +322,34 @@
 
     function checkEnter(event) {
       if (event.key === "Enter") {
-        const val = input.value.trim();
+       let val = input.value.trim();
 
-        if (val.length === 0) return;
+if (val.length === 0) return;
 
-        if (!val.startsWith("http://") && !val.startsWith("https://")) {
-          alert("Please start your URL with http:// or https://");
-          return;
-        }
+if (!val.startsWith("http://") && !val.startsWith("https://")) {
+  alert("Please start your URL with http:// or https://");
+  return;
+}
 
-        const hasValidDomain = fullDomains.some(domain => val.endsWith(domain));
-        if (!hasValidDomain) {
-          alert("URL should end with a valid domain like .com, .net, .org etc.");
-          return;
-        }
+// Strip (prox) suffix before validation
+let isProxy = false;
+if (val.toLowerCase().endsWith("(prox)")) {
+  val = val.slice(0, -6).trim();
+  isProxy = true;
+}
 
-        // Proxy check for (prox)
-        if (val.toLowerCase().endsWith("(prox)")) {
-          const urlWithoutProxy = val.slice(0, -6);
-          openWithProxy(urlWithoutProxy);
-        } else {
-          openDirect(val);
-        }
+const hasValidDomain = fullDomains.some(domain => val.endsWith(domain));
+if (!hasValidDomain) {
+  alert("URL should end with a valid domain like .com, .net, .org etc.");
+  return;
+}
+
+if (isProxy) {
+  openWithProxy(val);
+} else {
+  openDirect(val);
+}
+
       }
     }
 
