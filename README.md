@@ -1,44 +1,37 @@
-gogard- is a lightweight web application that opens new browser tabs with about:blank URLs. This tool can be useful for testing, development, or scenarios where you need to quickly generate blank tabs.
+# gogard-
 
-🚀 Live Demo
-Experience the application in action: imqw00.github.io/gogard-
+**gogard-** is a lightweight web application that opens new browser tabs with `about:blank` URLs. This can be useful for testing, development, or quickly generating blank tabs for various purposes.
 
-🧰 Features
-Instantly opens multiple about:blank tabs.
+## 🚀 Live Demo
 
-Simple and intuitive user interface.
+[Click here to view the app](https://imqw00.github.io/gogard-)
 
-Lightweight and fast-loading.
+## 🧰 Features
 
-🛠️ Getting Started
+- Instantly opens multiple `about:blank` tabs
+- Simple and intuitive UI
+- No installation or setup required
+- Lightweight and fast
+
+## 🛠️ Getting Started
+
 To run the project locally:
 
-Clone the repository:
+1. **Clone the repository:**
 
-bash
-Copy
-Edit
-git clone https://github.com/imqw00/gogard-.git
-Navigate to the project directory:
+    ```bash
+    git clone https://github.com/imqw00/gogard-.git
+    ```
 
-bash
-Copy
-Edit
-cd gogard-
-Open index.html in your preferred web browser.
+2. **Navigate into the project directory:**
 
-No additional setup or dependencies are required.
+    ```bash
+    cd gogard-
+    ```
 
-📁 Project Structure
-index.html – Main HTML file.
+3. **Open `index.html` in your browser**
 
-style.css – Styling for the application.
+No frameworks, no dependencies — just HTML, CSS, and JavaScript.
 
-script.js – JavaScript functionality to open blank tabs.
+## 📁 Project Structure
 
-api/ – Placeholder for potential API integrations.
-
-TODO.md – Notes on planned features and improvements.
-
-📄 License
-This project is licensed under the MIT License.
