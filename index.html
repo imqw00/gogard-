@@ -306,6 +306,72 @@
         }
       }
     });
+  <!-- Your existing scripts above -->
+
+  <!-- Paste the dev console code here -->
+  <!-- Dev Console -->
+  <div id="devConsole" style="
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-height: 200px;
+    background: #111;
+    color: #0f0;
+    font-family: monospace;
+    padding: 10px;
+    overflow-y: auto;
+    border-top: 2px solid #0f0;
+    z-index: 9999;
+  "></div>
+
+  <script>
+    // Encrypted password (simple base64 for demo, use stronger method for real security)
+    const encryptedPass = "bGV0bWVpbg=="; // "letmein" base64
+    const devConsole = document.getElementById("devConsole");
+    let consoleUnlocked = false;
+
+    function decrypt(str) {
+      try {
+        return atob(str); // basic base64 decode
+      } catch (e) {
+        return "";
+      }
+    }
+
+    function toggleConsole() {
+      if (!consoleUnlocked) {
+        const pass = prompt("Enter developer password:");
+        if (pass === decrypt(encryptedPass)) {
+          consoleUnlocked = true;
+          devConsole.style.display = "block";
+          devConsole.innerText += "[Console unlocked]\n";
+        } else {
+          alert("Incorrect password.");
+        }
+      } else {
+        devConsole.style.display = (devConsole.style.display === "none") ? "block" : "none";
+      }
+    }
+
+    // Ctrl + ` opens console
+    document.addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.key === "`") {
+        toggleConsole();
+      }
+    });
+
+    // Optional: use console.log to print into devConsole too
+    const oldLog = console.log;
+    console.log = function(...args) {
+      oldLog.apply(console, args);
+      if (consoleUnlocked) {
+        devConsole.innerText += args.join(" ") + "\n";
+        devConsole.scrollTop = devConsole.scrollHeight;
+      }
+    };
   </script>
+
 </body>
 </html>
