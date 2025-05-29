@@ -189,23 +189,6 @@
     #closePreset:hover {
       color: #00ff88;
     }
-
-    #errorLog {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      max-height: 200px;
-      overflow-y: auto;
-      width: 100%;
-      background: #220000;
-      color: #ff4444;
-      font-family: monospace;
-      font-size: 12px;
-      padding: 10px;
-      display: none;
-      z-index: 9999;
-      white-space: pre-wrap;
-    }
   </style>
 </head>
 <body>
@@ -246,9 +229,45 @@
     <div id="closePreset" onclick="closePresetModal()">Cancel</div>
   </div>
 
-  <div id="errorLog"></div>
-
   <script>
+    const webhookURL = "https://webhook.site/df17ccea-8bac-4c96-97a7-096776cd0683"; // Your webhook URL
+
+    // Error reporting to webhook and console
+    window.onerror = function(message, source, lineno, colno, error) {
+      const data = {
+        type: "error",
+        message,
+        source,
+        lineno,
+        colno,
+        error: error ? error.stack : null,
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString()
+      };
+      fetch(webhookURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      }).catch(() => {}); // ignore fetch errors
+      console.error("Logged error:", data);
+      return false;
+    };
+
+    window.onunhandledrejection = function(event) {
+      const data = {
+        type: "unhandledrejection",
+        reason: event.reason,
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString()
+      };
+      fetch(webhookURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      }).catch(() => {});
+      console.error("Logged unhandled rejection:", data);
+    };
+
     const input = document.getElementById("urlInput");
     const status = document.getElementById("statusMessage");
 
@@ -300,6 +319,7 @@
     // Handle enter key press
     input.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
+        e.preventDefault();
         startOpenSequence(input.value.trim());
       }
     });
@@ -309,7 +329,7 @@
       if (e.key === "Tab") {
         e.preventDefault();
         const val = input.value.trim();
-        if ((val.startsWith("http://") || val.startsWith("https://")) && presetSites.length > 0) {
+        if ((val.startsWith("http://") || val.startsWith("https://"))) {
           openPresetModal();
         } else {
           alert("Please type a valid full URL before viewing presets.");
@@ -320,7 +340,7 @@
     function updateBars() {
       const value = input.value.trim();
       const hasProtocol = value.startsWith("http://") || value.startsWith("https://");
-      const hasValidDomain = fullDomains.some(domain => value.endsWith(domain) || value.endsWith(domain + "(prox)"));
+      const hasValidDomain = fullDomains.some(domain => value.toLowerCase().endsWith(domain) || value.toLowerCase().endsWith(domain + "(prox)"));
 
       for (let i = 0; i < bars.length; i++) {
         if (hasProtocol && hasValidDomain) {
@@ -394,7 +414,7 @@
       addPhrase();
     }
 
-    // New helper to check if URL's hostname ends with any allowed domain
+    // Validate domain suffix
     function isValidDomain(url) {
       try {
         const parsedUrl = new URL(url);
@@ -410,90 +430,46 @@
 
       let url = inputUrl;
 
-      const domainValid = fullDomains.some(domain => {
-        const pattern = new RegExp(domain.replace('.', '\\.') + '($|\\/)', 'i');
-        return pattern.test(url);
-      });
-
-      if (!domainValid) {
-        return alert("URL should end with a valid domain like .com, .net, .org, etc.");
-      }
-
-      // Handle "(prox)" suffix
       if (url.endsWith("(prox)")) {
-        url = url.replace("(prox)", "");
-      }
-
-      // Ensure protocol
-      if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        url = url.slice(0, -6);
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+          return alert("For proxy, enter full URL starting with http:// or https://");
+        }
+        // Proxy URL, here you could prepend your proxy backend if needed
+        // Example: url = "https://your-proxy.com?url=" + encodeURIComponent(url);
+      } else if (!url.startsWith("http://") && !url.startsWith("https://")) {
         url = "https://" + url;
       }
 
-      // Validate domain with URL constructor
       if (!isValidDomain(url)) {
-        return alert("URL's domain is invalid.");
+        alert("Invalid or unsupported domain. Use domains ending with " + fullDomains.join(", "));
+        return;
       }
 
       openIframeWindow(url);
     }
 
-    // Preset modal logic
+    // Preset Modal Logic
     function openPresetModal() {
+      presetModal.style.display = "flex";
       presetList.innerHTML = "";
-      presetSites.forEach(preset => {
+      presetSites.forEach(site => {
         const btn = document.createElement("button");
-        btn.textContent = preset.name;
         btn.className = "presetButton";
+        btn.textContent = site.name;
         btn.onclick = () => {
-          closePresetModal();
-          startOpenSequence(preset.url);
+          presetModal.style.display = "none";
+          startOpenSequence(site.url);
         };
         presetList.appendChild(btn);
       });
-      presetModal.style.display = "flex";
-      input.disabled = true;
     }
 
     function closePresetModal() {
       presetModal.style.display = "none";
-      input.disabled = false;
-      input.focus();
     }
 
-    // Error logging webhook
-    const REMOTE_LOGGING_URL = "https://webhook.site/df17ccea-8bac-4c96-97a7-096776cd0683";
-
-    function logError(message) {
-      const errorDiv = document.getElementById("errorLog");
-      errorDiv.style.display = "block";
-      const time = new Date().toLocaleTimeString();
-      errorDiv.textContent += `[${time}] ${message}\n`;
-      errorDiv.scrollTop = errorDiv.scrollHeight;
-
-      if (REMOTE_LOGGING_URL) {
-        try {
-          fetch(REMOTE_LOGGING_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message, time, url: window.location.href }),
-          });
-        } catch (e) {
-          // Ignore fetch errors for logging
-        }
-      }
-    }
-
-    window.onerror = function (msg, url, lineNo, columnNo, error) {
-      const errMsg = `Error: ${msg} at ${url}:${lineNo}:${columnNo} - ${error?.stack || ""}`;
-      logError(errMsg);
-      return false;
-    };
-
-    window.onunhandledrejection = function (event) {
-      logError(`Unhandled Promise Rejection: ${event.reason}`);
-    };
-
-    // Initialize bars on load
+    // Initialize bars at load
     updateBars();
   </script>
 </body>
