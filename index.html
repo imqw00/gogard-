@@ -413,9 +413,36 @@
     }
 
     // Start loading sequence animation and final redirect
-    async function startLoadingSequence(url) {
-      loadingBars.classList.add("squish");
-      status.textContent = "Loading...";
+   async function startLoadingSequence(url) {
+  loadingBars.classList.add("squish");
+  status.textContent = "Loading...";
+
+  // Pre-open blank tab
+  const win = window.open("about:blank", "_blank");
+  if (!win) {
+    alert("Popup blocked. Please allow popups.");
+    return;
+  }
+
+  // Show final loading bar
+  finalLoading.style.display = "block";
+  finalLoadingFill.style.width = "0%";
+
+  // Animate final loading bar fill
+  await new Promise((r) => {
+    finalLoadingFill.style.transition = "width 3s ease";
+    finalLoadingFill.style.width = "100%";
+    setTimeout(r, 3000);
+  });
+
+  // Write iframe to pre-opened tab
+  win.document.write(`
+    <html><body style="margin:0;">
+    <iframe src="${url}" frameborder="0" style="width:100vw;height:100vh;"></iframe>
+    </body></html>
+  `);
+}
+
 
       // Show final loading bar
       finalLoading.style.display = "block";
