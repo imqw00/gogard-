@@ -1,9 +1,286 @@
-@@ -281,136 +281,160 @@ <h2>Choose a Preset Site</h2>
+@@ -0,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>new tab</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #0d0d0d;
+      color: #f2f2f2;
+      font-family: "Segoe UI", sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      overflow: hidden;
+    }
+
+    .loading-bars {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 10px;
+      padding: 0 40px;
+      transition: transform 0.8s ease, opacity 0.8s ease;
+      transform-origin: right;
+    }
+
+    .loading-bars.squish {
+      transform: scaleX(0);
+      opacity: 0;
+    }
+
+    .bar {
+      width: 100%;
+      height: 6px;
+      background: #1a1a1a;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #00ff88;
+      transition: width 0.3s ease;
+    }
+
+    .content {
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+    }
+
+    #statusMessage {
+      font-size: 1.2rem;
+      opacity: 1;
+    }
+
+    .disclaimer {
+      color: #666;
+      font-size: 12px;
+      text-align: center;
+      padding: 10px 20px;
+      z-index: 2;
+    }
+
+    .input-bar {
+      display: flex;
+      justify-content: center;
+      padding: 0 20px 20px 20px;
+      z-index: 2;
+    }
+
+    input {
+      width: 80%;
+      max-width: 700px;
+      padding: 14px 18px;
+      font-size: 16px;
+      border: none;
+      border-radius: 25px;
+      background-color: #1a1a1a;
+      color: white;
+      transition: all 0.25s ease;
+      outline: none;
+    }
+
+    input:hover, input:focus {
+      background-color: #262626;
+      transform: scale(1.05);
+    }
+
+    #codeFlow {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
+      font-size: 14px;
+      display: none;
+      z-index: 10;
+      pointer-events: none;
+      user-select: none;
+      padding: 20px;
+      white-space: pre-wrap;
+      overflow-y: auto;
+    }
+
+    #finalLoading {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 300px;
+      height: 8px;
+      background: #1a1a1a;
+      border-radius: 4px;
+      overflow: hidden;
+      display: none;
+      z-index: 11;
+    }
+
+    #finalLoadingFill {
+      height: 100%;
+      width: 0;
+      background: #00ff88;
+      transition: width 1.5s ease;
+    }
+
+    #presetModal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.9);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 20;
+      color: white;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    #presetModal h2 {
+      margin-bottom: 20px;
+    }
+
+    #presetList {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+      max-width: 600px;
+    }
+
+    .presetButton {
+      background: #1a1a1a;
+      border: 2px solid #00ff88;
+      border-radius: 20px;
+      padding: 12px 24px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      color: white;
+    }
+
+    .presetButton:hover {
+      background: #00ff88;
+      color: black;
+    }
+
+    #closePreset {
+      margin-top: 30px;
+      color: #888;
+      cursor: pointer;
+    }
+
+    #closePreset:hover {
+      color: #00ff88;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="loading-bars" id="loadingBars">
+    <div class="bar"><div class="bar-fill" id="bar1"></div></div>
+    <div class="bar"><div class="bar-fill" id="bar2"></div></div>
+    <div class="bar"><div class="bar-fill" id="bar3"></div></div>
+    <div class="bar"><div class="bar-fill" id="bar4"></div></div>
+    <div class="bar"><div class="bar-fill" id="bar5"></div></div>
+  </div>
+
+  <div class="content">
+    <div id="statusMessage">GoGard++</div>
+  </div>
+
+  <div class="disclaimer">This does not break any Glitch ToS, so please don't take down my project. Google Sites doesn't work so don't use it.</div>
+
+  <div class="input-bar">
+    <input
+      id="urlInput"
+      type="text"
+      placeholder="Enter a full URL like https://example.com"
+      oninput="updateBars()"
+      onfocus="expandInput()"
+      onblur="shrinkInput()"
+      onkeypress="checkEnter(event)"
+      autocomplete="off"
+      spellcheck="false"
+    />
+  </div>
+
+  <pre id="codeFlow"></pre>
+
+  <div id="finalLoading">
+    <div id="finalLoadingFill"></div>
+  </div>
+
+  <div id="presetModal">
+    <h2>Choose a Preset Site</h2>
+    <div id="presetList"></div>
+    <div id="closePreset" onclick="closePresetModal()">Cancel</div>
+  </div>
+
+  <script>
+    const input = document.getElementById("urlInput");
+    const status = document.getElementById("statusMessage");
+
+    const bars = [
+      document.getElementById("bar1"),
+      document.getElementById("bar2"),
+      document.getElementById("bar3"),
+      document.getElementById("bar4"),
+      document.getElementById("bar5"),
+    ];
+
+    const fullDomains = [".com", ".net", ".org", ".io", ".gov", ".edu", ".co", ".me"];
+    const loadingBars = document.getElementById("loadingBars");
+    const codeFlow = document.getElementById("codeFlow");
+    const finalLoading = document.getElementById("finalLoading");
+    const finalLoadingFill = document.getElementById("finalLoadingFill");
+    const presetModal = document.getElementById("presetModal");
+    const presetList = document.getElementById("presetList");
+
+    const presetSites = [
+      { name: "gamest1", url: "https://only-games.github.io/" },
+      { name: "gamest2", url: "https://unblockedgames200.github.io/" },
+      { name: "gamest3", url: "https://coolunblockedgames.github.io/" },
+      { name: "gamest4", url: "https://unblocked-2025.github.io/" },
+      { name: "gamest5", url: "https://faf-games.github.io/" }
+    ];
+
+    const hackerPhrases = [
+      "bypassing GoGuard...",
+      "connecting to server...",
+      "initializing proxy...",
+      "decrypting data...",
+      "injecting payload...",
+      "scanning ports...",
+      "firewall disabled...",
+      "accessing darknet...",
+      "routing through VPN...",
+      "establishing secure tunnel...",
+      "uploading exploit...",
+      "masking IP address...",
+      "reconfiguring DNS...",
+      "spoofing credentials...",
+      "launching payload..."
+    ];
 
     let codeFlowInterval;
-
-    // Your Vercel proxy base URL (no trailing slash, keep the /api/proxy?url=)
-    const proxyBase = 'https://YOUR_VERCEL_PROJECT.vercel.app/api/proxy?url=';
 
     function updateBars() {
       const value = input.value.trim();
@@ -16,13 +293,7 @@
         } else {
           const base = Math.min(value.length / 50, 1) * 100;
           bars[i].style.width = base * ((i + 1) / bars.length) + "%";
-        let fillWidth = 0;
-        if (value.length > 0) {
-          fillWidth = Math.min(100, (value.length * 2) + (hasProtocol ? 10 : 0));
-          if (hasValidDomain) fillWidth += 20;
-          fillWidth = Math.min(100, fillWidth);
         }
-        bars[i].style.width = fillWidth + "%";
       }
     }
 
@@ -39,17 +310,8 @@
         } else {
           alert("Please type a valid full URL before viewing presets.");
         }
-      if (value.length === 0) {
-        status.textContent = "GoGard++";
-      } else if (!hasProtocol) {
-        status.textContent = "Remember to start with http:// or https://";
-      } else if (!hasValidDomain) {
-        status.textContent = "Make sure to include a valid domain like .com or .net";
-      } else {
-        status.textContent = "Press Enter to open";
       }
     });
-    }
 
     function openPresetModal() {
       presetList.innerHTML = "";
@@ -64,16 +326,10 @@
         presetList.appendChild(btn);
       });
       presetModal.style.display = "flex";
-    function expandInput() {
-      input.style.transform = "scale(1.05)";
-      input.style.backgroundColor = "#262626";
     }
 
     function closePresetModal() {
       presetModal.style.display = "none";
-    function shrinkInput() {
-      input.style.transform = "scale(1)";
-      input.style.backgroundColor = "#1a1a1a";
     }
 
     function startOpenSequence(url) {
@@ -81,112 +337,52 @@
         alert("Please enter a full URL starting with http:// or https://");
         return;
       }
-    function checkEnter(event) {
-      if (event.key === "Enter") {
-        const val = input.value.trim();
 
       input.disabled = true;
       input.style.opacity = 0.3;
       loadingBars.classList.remove("squish");
-        if (val.length === 0) return;
 
       bars.forEach(bar => bar.style.width = "0%");
       let barIndex = 0;
-        if (!val.startsWith("http://") && !val.startsWith("https://")) {
-          alert("Please start your URL with http:// or https://");
-          return;
-        }
 
       function fillNextBar() {
         if (barIndex >= bars.length) {
           loadingBars.classList.add("squish");
           startCodeFlowAnimation(url);
-        const hasValidDomain = fullDomains.some(domain => val.endsWith(domain));
-        if (!hasValidDomain) {
-          alert("URL should end with a valid domain like .com, .net, .org etc.");
           return;
         }
         bars[barIndex].style.width = "100%";
         barIndex++;
         setTimeout(fillNextBar, 350);
-
-        // Proxy check for (prox)
-        if (val.toLowerCase().endsWith("(prox)")) {
-          const urlWithoutProxy = val.slice(0, -6);
-          openWithProxy(urlWithoutProxy);
-        } else {
-          openDirect(val);
-        }
       }
-    }
-
-    function openWithProxy(targetUrl) {
-      // Encode the target URL for safe transmission in query param
-      const encodedUrl = encodeURIComponent(targetUrl);
-      const proxiedUrl = proxyBase + encodedUrl;
 
       fillNextBar();
-      runLoadingAnimation(() => {
-        window.open(proxiedUrl, "_blank");
-      });
     }
 
     function startCodeFlowAnimation(url) {
-    function openDirect(targetUrl) {
-      runLoadingAnimation(() => {
-        window.open(targetUrl, "_blank");
-      });
-    }
-
-    function runLoadingAnimation(callback) {
-      loadingBars.classList.remove("squish");
       codeFlow.style.display = "block";
       input.style.display = "none";
       let index = 0;
-      finalLoading.style.display = "none";
-      codeFlow.textContent = "";
-      let phraseIndex = 0;
-
-      if (codeFlowInterval) clearInterval(codeFlowInterval);
 
       codeFlowInterval = setInterval(() => {
         if (index >= hackerPhrases.length) {
-        if (phraseIndex >= hackerPhrases.length) {
           clearInterval(codeFlowInterval);
           showFinalLoading(url);
-          startFinalLoading(callback);
           return;
         }
         codeFlow.textContent += hackerPhrases[index++] + "\n";
-        codeFlow.textContent += hackerPhrases[phraseIndex] + "\n";
         codeFlow.scrollTop = codeFlow.scrollHeight;
       }, 200);
-        phraseIndex++;
-      }, 350);
     }
 
     function showFinalLoading(url) {
-    function startFinalLoading(callback) {
       finalLoading.style.display = "block";
       finalLoadingFill.style.width = "0%";
       setTimeout(() => finalLoadingFill.style.width = "100%", 100);
-
-      // Animate final loading bar fill over 1.5s
       setTimeout(() => {
         openIframeWindow(url);
         resetUI();
       }, 1800);
-        finalLoadingFill.style.width = "100%";
-      }, 50);
-
-      // After animation completes, run callback and reset UI
-      setTimeout(() => {
-        loadingBars.classList.add("squish");
-        codeFlow.style.display = "none";
-        finalLoading.style.display = "none";
-        finalLoadingFill.style.width = "0%";
-        callback();
-      }, 1700);
     }
 
     function openIframeWindow(url) {
@@ -197,21 +393,6 @@
         <iframe src="${url}" frameborder="0" style="width:100vw;height:100vh;"></iframe>
         </body></html>
       `);
-    // Preset modal functions
-    function openPresetModal() {
-      presetModal.style.display = "flex";
-      presetList.innerHTML = "";
-      presetSites.forEach(site => {
-        const btn = document.createElement("button");
-        btn.textContent = site.name;
-        btn.className = "presetButton";
-        btn.onclick = () => {
-          input.value = site.url;
-          updateBars();
-          closePresetModal();
-        };
-        presetList.appendChild(btn);
-      });
     }
 
     function resetUI() {
@@ -227,23 +408,10 @@
       finalLoadingFill.style.width = "0%";
       status.textContent = "URl TO BYPASS";
       input.focus();
-    function closePresetModal() {
-      presetModal.style.display = "none";
     }
 
     function expandInput() { input.style.width = "85%"; }
     function shrinkInput() { input.style.width = "80%"; }
-    // For convenience, open preset modal on Ctrl+P (for example)
-    document.addEventListener("keydown", (e) => {
-      if (e.ctrlKey && e.key === "p") {
-        e.preventDefault();
-        openPresetModal();
-      }
-    });
-
-    // Initialize bars on load
-    updateBars();
-
   </script>
 </body>
 </html>
