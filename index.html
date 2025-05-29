@@ -1,120 +1,103 @@
 <!DOCTYPE html>
-<html lang="en" >
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Customizable Tab Launcher with Embed</title>
+  <title>Customizable Tab Launcher</title>
   <style>
     body {
-      background: #121212;
-      color: #eee;
-      font-family: Arial, sans-serif;
+      background: #0d0d0d;
+      color: #f2f2f2;
+      font-family: "Segoe UI", sans-serif;
+      margin: 0;
       padding: 20px;
-      max-width: 800px;
-      margin: auto;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
     }
-    h1 {
-      text-align: center;
-      margin-bottom: 1rem;
-      color: #0f0;
-    }
-    #urlInput {
-      width: 100%;
-      padding: 10px 15px;
+    input {
+      padding: 12px;
       font-size: 16px;
+      width: 100%;
+      max-width: 600px;
       border-radius: 6px;
       border: none;
+      outline: none;
       margin-bottom: 10px;
-      background: #222;
-      color: #eee;
+      background: #1a1a1a;
+      color: white;
     }
-    #urlInput:focus {
-      outline: 2px solid #0f0;
-    }
-    #openBtn {
-      padding: 10px 20px;
+    button {
+      padding: 12px 20px;
       font-size: 16px;
       border-radius: 6px;
       border: none;
-      background: #0f0;
-      color: #000;
+      background: #00ff88;
+      color: black;
       cursor: pointer;
+      max-width: 600px;
       margin-bottom: 20px;
-      width: 100%;
     }
-    #openBtn:hover {
-      background: #0c0;
-    }
-    #embedFrame {
+    iframe {
+      flex-grow: 1;
+      border: none;
       width: 100%;
-      height: 500px;
-      border: 3px solid #0f0;
+      max-width: 1000px;
       border-radius: 8px;
-      display: none;
-      margin-top: 20px;
+      background: black;
     }
   </style>
 </head>
 <body>
 
-<h1>Customizable Tab Launcher with Embed</h1>
+  <h1>Customizable Tab Launcher</h1>
+  <input id="urlInput" placeholder="Enter URL, e.g. https://myproxy.com/(https://google.com)" />
+  <button id="openBtn">Open URL</button>
+  <iframe id="embedFrame" style="display:none;" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
 
-<input
-  id="urlInput"
-  type="text"
-  placeholder="Enter URL (optionally end with (https://example.com))"
-/>
-<button id="openBtn">Open URL / Embed</button>
+  <script>
+    const input = document.getElementById('urlInput');
+    const openBtn = document.getElementById('openBtn');
+    const embedFrame = document.getElementById('embedFrame');
 
-<iframe id="embedFrame" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
-
-<script>
-  const urlInput = document.getElementById('urlInput');
-  const openBtn = document.getElementById('openBtn');
-  const embedFrame = document.getElementById('embedFrame');
-
-  function parseInput(input) {
-    // Regex to detect "(someURL)" at the end
-    const regex = /\((https?:\/\/[^\s)]+)\)$/i;
-    const match = input.match(regex);
-    if (match) {
-      // URL without parentheses part
-      const outerUrl = input.slice(0, match.index).trim();
-      // The embedded URL inside parentheses
-      const embeddedUrl = match[1];
-      return { outerUrl, embeddedUrl };
-    } else {
-      return { outerUrl: input.trim(), embeddedUrl: null };
-    }
-  }
-
-  openBtn.onclick = () => {
-    const input = urlInput.value.trim();
-    if (!input) {
-      alert('Please enter a URL');
-      return;
-    }
-    const { outerUrl, embeddedUrl } = parseInput(input);
-
-    if (!outerUrl.match(/^https?:\/\//)) {
-      alert('Outer URL must start with http:// or https://');
-      return;
+    function parseInput(url) {
+      // Look for parentheses containing embedded URL
+      const match = url.match(/\((https?:\/\/[^)]+)\)/);
+      if (match) {
+        const embeddedUrl = match[1];
+        // Remove the embedded URL part (including parentheses) from outer URL
+        const outerUrl = url.replace(/\(https?:\/\/[^)]+\)/, '').trim();
+        return { outerUrl, embeddedUrl };
+      }
+      return { outerUrl: url.trim(), embeddedUrl: null };
     }
 
-    if (embeddedUrl) {
-      // Show iframe embedding embeddedUrl inside the page
-      embedFrame.style.display = 'block';
-      embedFrame.src = embeddedUrl;
+    openBtn.onclick = () => {
+      const val = input.value.trim();
+      if (!val) {
+        alert('Please enter a URL');
+        return;
+      }
 
-      // Open outerUrl in new tab
-      window.open(outerUrl, '_blank');
-    } else {
-      // No embed, just open outerUrl in new tab
-      embedFrame.style.display = 'none';
-      embedFrame.src = '';
-      window.open(outerUrl, '_blank');
-    }
-  };
-</script>
+      const { outerUrl, embeddedUrl } = parseInput(val);
 
+      if (embeddedUrl) {
+        // Open embedded URL in new tab
+        window.open(embeddedUrl, '_blank');
+
+        // Show embedded URL in iframe on page
+        embedFrame.style.display = 'block';
+        embedFrame.src = embeddedUrl;
+      } else {
+        // No embedded URL, open outer URL
+        if (!outerUrl.match(/^https?:\/\//)) {
+          alert('URL must start with http:// or https://');
+          return;
+        }
+        window.open(outerUrl, '_blank');
+        embedFrame.style.display = 'none';
+        embedFrame.src = '';
+      }
+    };
+  </script>
 </body>
 </html>
