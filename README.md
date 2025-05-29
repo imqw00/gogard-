@@ -34,4 +34,21 @@ To run the project locally:
 No frameworks, no dependencies — just HTML, CSS, and JavaScript.
 
 ## 📁 Project Structure
+# gogard-
+
+**gogard-** is a lightweight web application that opens new browser tabs with `about:blank` URLs...
+
+<!-- (Rest of the content) -->
+
+## ✅ TODO
+
+See [`TODO.md`](TODO.md) for upcoming features and planned improvements.
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+Made with ❤️ by [@imqw00](https://github.com/imqw00)
 
