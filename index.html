@@ -322,7 +322,13 @@
       }
     }
 
-    function openIframeWindow(url) {
+    function openIframeWindow(url) {// Instead of window.open(url, "_blank");
+if (newWin && !newWin.closed) {
+  newWin.location.href = url;
+} else {
+  window.open(url, "_blank");
+}
+
       // Squish loading bars away
       loadingBars.classList.add("squish");
 
