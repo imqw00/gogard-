@@ -387,7 +387,22 @@
     }
 
     function startOpenSequence(inputUrl) {
-      if (!inputUrl) return alert("Please enter a URL.");
+  if (!inputUrl) return alert("Please enter a URL.");
+
+  let url = inputUrl;
+
+  const domainValid = fullDomains.some(domain => {
+    const pattern = new RegExp(domain.replace('.', '\\.') + '($|\\/)', 'i');
+    return pattern.test(url);
+  });
+
+  if (!domainValid) {
+    return alert("URL should end with a valid domain like .com, .net, .org, etc.");
+  }
+
+  openIframeWindow(url);
+}
+
 
       let url = inputUrl;
 
