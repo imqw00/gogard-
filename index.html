@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #121212;
+            background-color: #1e1e1e;
             color: #ffffff;
             display: flex;
             flex-direction: column;
@@ -16,15 +16,15 @@
             height: 100vh;
             margin: 0;
         }
-        #urlInput {
+        input {
             width: 80%;
             padding: 10px;
-            border: 1px solid #ffffff;
+            border: none;
             border-radius: 5px;
-            background-color: #1e1e1e;
-            color: #ffffff;
+            margin-bottom: 20px;
+            transition: width 0.3s;
         }
-        #presetModal {
+        .presetModal {
             display: none;
             position: fixed;
             top: 0;
@@ -35,11 +35,18 @@
             justify-content: center;
             align-items: center;
         }
+        .presetList {
+            background-color: #2e2e2e;
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+        }
         .presetButton {
-            background-color: #3a3a3a;
-            color: #ffffff;
+            background-color: #4CAF50;
+            color: white;
             padding: 10px;
-            margin: 5px;
+            margin: 5px 0;
             border: none;
             border-radius: 5px;
             cursor: pointer;
@@ -47,33 +54,37 @@
         .loadingBar {
             width: 0;
             height: 5px;
-            background-color: #4caf50;
+            background-color: #4CAF50;
             transition: width 0.35s;
         }
-        #codeFlow {
+        .loadingContainer {
+            width: 80%;
+            background-color: #555;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .codeFlow {
             display: none;
-            background-color: #1e1e1e;
+            background-color: #2e2e2e;
             color: #ffffff;
             padding: 10px;
             border-radius: 5px;
-            overflow-y: auto;
             max-height: 200px;
+            overflow-y: auto;
         }
     </style>
 </head>
 <body>
 
     <input type="text" id="urlInput" placeholder="Enter URL and press Tab" />
-    <div id="loadingBars">
-        <div class="loadingBar"></div>
-        <div class="loadingBar"></div>
-        <div class="loadingBar"></div>
+    <div class="loadingContainer">
+        <div class="loadingBar" id="loadingBar"></div>
     </div>
-    <div id="presetModal">
-        <div id="presetList"></div>
-        <button onclick="closePresetModal()">Close</button>
+    <div class="codeFlow" id="codeFlow"></div>
+    <div class="presetModal" id="presetModal">
+        <div class="presetList" id="presetList"></div>
     </div>
-    <pre id="codeFlow"></pre>
 
     <script>
         const presetSites = [
@@ -82,105 +93,111 @@
             { name: "Twitter", url: "https://www.twitter.com" }
         ];
 
-        document.getElementById('urlInput').addEventListener('keydown', function(event) {
+        const urlInput = document.getElementById('urlInput');
+        const presetModal = document.getElementById('presetModal');
+        const presetList = document.getElementById('presetList');
+        const loadingBar = document.getElementById('loadingBar');
+        const codeFlow = document.getElementById('codeFlow');
+
+        urlInput.addEventListener('keydown', function(event) {
             if (event.key === 'Tab') {
                 event.preventDefault();
-                const inputValue = this.value.trim();
+                const inputValue = urlInput.value.trim();
                 if ((inputValue.startsWith('http://') || inputValue.startsWith('https://')) && presetSites.length > 0) {
-                    const matchingSites = presetSites.filter(site => site.url.startsWith(inputValue));
-                    if (matchingSites.length > 0) {
-                        openPresetModal(matchingSites);
-                    } else {
-                        alert('Please enter a valid full URL before viewing presets.');
-                    }
+                    openPresetModal(inputValue);
+                } else {
+                    alert('Please enter a valid full URL before viewing presets.');
                 }
             }
         });
 
-        function openPresetModal(matchingSites) {
-            const presetList = document.getElementById('presetList');
+        function openPresetModal(inputValue) {
             presetList.innerHTML = '';
-            matchingSites.forEach(site => {
+            presetSites.forEach(site => {
                 const button = document.createElement('div');
                 button.className = 'presetButton';
                 button.innerText = site.name;
-                button.onclick = () => {
-                    document.getElementById('urlInput').value = site.url;
+                button.onclick = function() {
+                    urlInput.value = site.url;
                     closePresetModal();
                     startOpenSequence(site.url);
                 };
                 presetList.appendChild(button);
             });
-            document.getElementById('presetModal').style.display = 'flex';
+            presetModal.style.display = 'flex';
         }
 
         function closePresetModal() {
-            document.getElementById('presetModal').style.display = 'none';
+            presetModal.style.display = 'none';
         }
 
         function startOpenSequence(url) {
             if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                alert('Invalid URL!');
+                alert('Invalid URL');
                 return;
             }
-            document.getElementById('urlInput').disabled = true;
-            document.getElementById('urlInput').style.opacity = 0.3;
-            resetLoadingBars();
-            fillNextBar(url);
-        }
+            urlInput.disabled = true;
+            urlInput.style.opacity = '0.3';
+            loadingBar.style.width = '0%';
+            let barIndex = 0;
 
-        function resetLoadingBars() {
-            const bars = document.querySelectorAll('.loadingBar');
-            bars.forEach(bar => bar.style.width = '0%');
-        }
-
-        let barIndex = 0;
-        function fillNextBar(url) {
-            const bars = document.querySelectorAll('.loadingBar');
-            if (barIndex < bars.length) {
-                bars[barIndex].style.width = '100%';
-                barIndex++;
-                setTimeout(() => fillNextBar(url), 350);
-            } else {
-                showFinalLoading(url);
+            function fillNextBar() {
+                if (barIndex >= 1) {
+                    showFinalLoading(url);
+                } else {
+                    loadingBar.style.width = '100%';
+                    barIndex++;
+                    setTimeout(fillNextBar, 350);
+                }
             }
+            fillNextBar();
         }
 
         function showFinalLoading(url) {
+            loadingBar.style.width = '100%';
             setTimeout(() => {
                 openIframeWindow(url);
+                resetUI();
             }, 1800);
         }
 
+        function resetUI() {
+            urlInput.disabled = false;
+            urlInput.style.opacity = '1';
+            urlInput.value = '';
+            loadingBar.style.width = '0%';
+            closePresetModal();
+            codeFlow.innerHTML = '';
+        }
+
         function openIframeWindow(url) {
-            const newWindow = window.open();
+            const newWindow = window.open('about:blank', '_blank');
             newWindow.document.write(`
-                <!DOCTYPE html>
-                <html lang="en">
+                <html>
                 <head>
-                    <meta charset="UTF-8">
                     <title>Embedded Console</title>
                     <style>
                         body { margin: 0; }
-                        iframe { width: 100%; height: 100vh; border: none; }
-                        #codeInput { position: fixed; bottom: 0; width: 100%; }
+                        iframe { width: 100vw; height: 100vh; border: none; }
+                        .console { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(0, 0, 0, 0.8); color: white; padding: 10px; }
                     </style>
                 </head>
                 <body>
                     <iframe src="${url}"></iframe>
-                    <input type="text" id="codeInput" placeholder="Enter JavaScript command" />
-                    <div id="codeFlow" style="display: none;"></div>
+                    <div class="console" id="console">
+                        <input type="text" id="codeInput" placeholder="Enter JS command" />
+                    </div>
                     <script>
-                        document.getElementById('codeInput').addEventListener('keydown', function(event) {
+                        const codeInput = document.getElementById('codeInput');
+                        codeInput.addEventListener('keypress', function(event) {
                             if (event.key === 'Enter') {
-                                const command = this.value;
                                 try {
-                                    const result = eval(command);
+                                    const result = eval(codeInput.value);
                                     console.log(result);
                                 } catch (error) {
                                     console.error(error);
                                 }
-                                this.value = '';
+                                codeInput.value = '';
                             }
                         });
                     </script>
@@ -188,15 +205,6 @@
                 </html>
             `);
             newWindow.document.close();
-            resetUI();
-        }
-
-        function resetUI() {
-            document.getElementById('urlInput').disabled = false;
-            document.getElementById('urlInput').style.opacity = 1;
-            document.getElementById('urlInput').value = '';
-            barIndex = 0;
-            resetLoadingBars();
         }
     </script>
 </body>
