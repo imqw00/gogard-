@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>GoGard++</title>
   <style>
-    /* Your existing styles remain unchanged (abbreviated here) */
+    /* --- Body and base styles --- */
     body {
       margin: 0;
       background-color: #0d0d0d;
@@ -16,15 +16,104 @@
       justify-content: flex-end;
       overflow: hidden;
     }
-    .loading-bars { /* ... */ }
-    .bar { /* ... */ }
-    .bar-fill { /* ... */ }
-    .content { /* ... */ }
-    #statusMessage { /* ... */ }
-    .disclaimer { /* ... */ }
-    .input-bar { /* ... */ }
-    input#urlInput { /* ... */ }
-    input#urlInput:hover, input#urlInput:focus { /* ... */ }
+
+    /* --- Loading bars container --- */
+    .loading-bars {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 10px;
+      padding: 0 40px;
+      transition: transform 0.8s ease, opacity 0.8s ease;
+      transform-origin: right;
+      user-select: none;
+    }
+
+    /* When squished */
+    .loading-bars.squish {
+      transform: scaleX(0);
+      opacity: 0;
+    }
+
+    /* Each bar */
+    .bar {
+      width: 100%;
+      height: 6px;
+      background: #1a1a1a;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    /* The colored fill inside bar */
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #00ff88;
+      transition: width 0.3s ease;
+    }
+
+    /* --- Main content container --- */
+    .content {
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+    }
+
+    /* Status message styling */
+    #statusMessage {
+      font-size: 1.4rem;
+      opacity: 1;
+      user-select: none;
+    }
+
+    /* Disclaimer text */
+    .disclaimer {
+      color: #666;
+      font-size: 12px;
+      text-align: center;
+      padding: 10px 20px;
+      z-index: 2;
+      user-select: none;
+    }
+
+    /* Input bar container */
+    .input-bar {
+      display: flex;
+      justify-content: center;
+      padding: 0 20px 20px 20px;
+      z-index: 2;
+    }
+
+    /* Input styling */
+    input#urlInput {
+      width: 80%;
+      max-width: 700px;
+      padding: 14px 18px;
+      font-size: 16px;
+      border: none;
+      border-radius: 25px;
+      background-color: #1a1a1a;
+      color: white;
+      transition: all 0.25s ease;
+      outline: none;
+      user-select: text;
+    }
+
+    /* Hover and focus input effect */
+    input#urlInput:hover, input#urlInput:focus {
+      background-color: #262626;
+      transform: scale(1.05);
+    }
+
+    /* Code flow console for hacker text */
     #codeFlow {
       position: fixed;
       top: 0; left: 0;
@@ -42,19 +131,113 @@
       white-space: pre-wrap;
       overflow-y: auto;
     }
-    #finalLoading { /* ... */ }
-    #finalLoadingFill { /* ... */ }
-    #presetModal { /* ... */ }
-    #presetModal h2 { /* ... */ }
-    #presetList { /* ... */ }
-    .presetButton { /* ... */ }
-    .presetButton:hover { /* ... */ }
-    #closePreset { /* ... */ }
-    #closePreset:hover { /* ... */ }
+
+    /* Final loading bar container */
+    #finalLoading {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 300px;
+      height: 8px;
+      background: #1a1a1a;
+      border-radius: 4px;
+      overflow: hidden;
+      display: none;
+      z-index: 11;
+      user-select: none;
+    }
+
+    /* Final loading bar fill */
+    #finalLoadingFill {
+      height: 100%;
+      width: 0;
+      background: #00ff88;
+      transition: width 1.5s ease;
+    }
+
+    /* Preset modal overlay */
+    #presetModal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.9);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 20;
+      color: white;
+      padding: 20px;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    /* Preset modal header */
+    #presetModal h2 {
+      margin-bottom: 20px;
+    }
+
+    /* Preset buttons container */
+    #presetList {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+      max-width: 600px;
+    }
+
+    /* Individual preset button */
+    .presetButton {
+      background: #1a1a1a;
+      border: 2px solid #00ff88;
+      border-radius: 20px;
+      padding: 12px 24px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      color: white;
+      user-select: none;
+    }
+
+    .presetButton:hover {
+      background: #00ff88;
+      color: black;
+    }
+
+    /* Close preset button */
+    #closePreset {
+      margin-top: 30px;
+      color: #888;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    #closePreset:hover {
+      color: #00ff88;
+    }
+
+    /* --- Dev Console --- */
+    #devConsole {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      max-height: 200px;
+      background: #111;
+      color: #0f0;
+      font-family: monospace;
+      padding: 10px;
+      overflow-y: auto;
+      border-top: 2px solid #0f0;
+      z-index: 9999;
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
 
+  <!-- Loading bars -->
   <div class="loading-bars" id="loadingBars">
     <div class="bar"><div class="bar-fill" id="bar1"></div></div>
     <div class="bar"><div class="bar-fill" id="bar2"></div></div>
@@ -63,12 +246,15 @@
     <div class="bar"><div class="bar-fill" id="bar5"></div></div>
   </div>
 
+  <!-- Main content area -->
   <div class="content">
     <div id="statusMessage">GoGard++</div>
   </div>
 
+  <!-- Disclaimer -->
   <div class="disclaimer">This does not break any Glitch ToS, so please don't take down my project. Google Sites doesn't work so don't use it.</div>
 
+  <!-- URL input -->
   <div class="input-bar">
     <input
       id="urlInput"
@@ -83,19 +269,26 @@
     />
   </div>
 
+  <!-- Hacker style code flow -->
   <pre id="codeFlow"></pre>
 
+  <!-- Final loading bar -->
   <div id="finalLoading">
     <div id="finalLoadingFill"></div>
   </div>
 
+  <!-- Preset modal -->
   <div id="presetModal">
     <h2>Choose a Preset Site</h2>
     <div id="presetList"></div>
     <div id="closePreset" onclick="closePresetModal()">Cancel</div>
   </div>
 
+  <!-- Dev Console -->
+  <div id="devConsole"></div>
+
   <script>
+    // DOM elements
     const input = document.getElementById("urlInput");
     const status = document.getElementById("statusMessage");
 
@@ -114,210 +307,177 @@
     const finalLoadingFill = document.getElementById("finalLoadingFill");
     const presetModal = document.getElementById("presetModal");
     const presetList = document.getElementById("presetList");
+    const devConsole = document.getElementById("devConsole");
 
     const presetSites = [
       { name: "gamest1", url: "https://only-games.github.io/" },
       { name: "gamest2", url: "https://unblockedgames200.github.io/" },
       { name: "gamest3", url: "https://coolunblockedgames.github.io/" },
-      { name: "gamest4", url: "https://unblocked-2025.github.io/" },
-      { name: "gamest5", url: "https://faf-games.github.io/" }
+      { name: "discord", url: "https://discord.com/app" },
+      { name: "youtube", url: "https://youtube.com" },
+      { name: "roblox", url: "https://roblox.com" },
+      { name: "reddit", url: "https://reddit.com" },
+      { name: "netflix", url: "https://netflix.com" }
     ];
 
-    const hackerPhrases = [
-      "bypassing GoGuard...",
-      "connecting to server...",
-      "initializing proxy...",
-      "decrypting data...",
-      "injecting payload...",
-      "scanning ports...",
-      "firewall disabled...",
-      "accessing darknet...",
-      "routing through VPN...",
-      "establishing secure tunnel...",
-      "uploading exploit...",
-      "masking IP address...",
-      "reconfiguring DNS...",
-      "spoofing credentials...",
-      "launching payload..."
-    ];
+    // Password for dev console (base64 encoded "letmein")
+    const encryptedPass = "bGV0bWVpbg==";
+    let consoleUnlocked = false;
 
-    let codeFlowInterval;
-
-    function updateBars() {
-      const value = input.value.trim();
-      const hasProtocol = value.startsWith("http://") || value.startsWith("https://");
-      const hasValidDomain = fullDomains.some(domain => value.endsWith(domain));
-
-      for (let i = 0; i < bars.length; i++) {
-        if (hasProtocol && hasValidDomain) {
-          bars[i].style.width = "100%";
-        } else {
-          const base = Math.min(value.length / 50, 1) * 100;
-          bars[i].style.width = base * ((i + 1) / bars.length) + "%";
-        }
+    // Decrypt password helper
+    function decrypt(str) {
+      try {
+        return atob(str);
+      } catch (e) {
+        return "";
       }
     }
 
-    function checkEnter(e) {
-      if (e.key === "Enter") {
+    // Update bars fill based on input length and domain presence
+    function updateBars() {
+      const val = input.value.toLowerCase();
+
+      // Calculate fill % based on length max 100%
+      let baseFill = Math.min(val.length * 8, 100);
+
+      // Check if input includes any full domain
+      const hasDomain = fullDomains.some(domain => val.includes(domain));
+      if (!hasDomain && val.length > 0) {
+        // Reduce fill if no valid domain
+        baseFill = Math.min(baseFill, 40);
+      }
+
+      // Fill bars in sequence with increments
+      bars.forEach((bar, i) => {
+        const fillVal = Math.min(baseFill - i * 20, 100);
+        bar.style.width = fillVal > 0 ? fillVal + "%" : "0%";
+      });
+    }
+
+    // Expand input on focus
+    function expandInput() {
+      input.style.width = "95%";
+      input.style.transition = "width 0.3s ease";
+    }
+
+    // Shrink input on blur
+    function shrinkInput() {
+      input.style.width = "80%";
+    }
+
+    // Check for Enter key press to trigger navigation or preset modal
+    function checkEnter(event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
         const val = input.value.trim();
+
         if (val === "(ai)") {
           openDevConsole();
           return;
         }
-        startOpenSequence(val);
+
+        if (val === "presets") {
+          openPresetModal();
+          return;
+        }
+
+        if (!val.startsWith("http")) {
+          alert("Please enter a full URL including http or https.");
+          return;
+        }
+
+        startLoadingSequence(val);
       }
     }
 
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Tab") {
-        e.preventDefault();
-        const val = input.value.trim();
-        if ((val.startsWith("http://") || val.startsWith("https://")) && presetSites.length > 0) {
-          openPresetModal();
-        } else {
-          alert("Please type a valid full URL before viewing presets.");
-        }
-      }
-    });
-
+    // Open preset modal and fill with buttons
     function openPresetModal() {
       presetList.innerHTML = "";
       presetSites.forEach(site => {
-        const btn = document.createElement("div");
-        btn.className = "presetButton";
+        const btn = document.createElement("button");
         btn.textContent = site.name;
+        btn.className = "presetButton";
         btn.onclick = () => {
+          input.value = site.url;
           closePresetModal();
-          startOpenSequence(site.url);
+          startLoadingSequence(site.url);
         };
         presetList.appendChild(btn);
       });
       presetModal.style.display = "flex";
     }
 
+    // Close preset modal
     function closePresetModal() {
       presetModal.style.display = "none";
     }
 
-    function startOpenSequence(url) {
-      if (!url.startsWith("http://") && !url.startsWith("https://")) {
-        alert("Please enter a full URL starting with http:// or https://");
-        return;
-      }
+    // Start loading sequence animation and final redirect
+    async function startLoadingSequence(url) {
+      loadingBars.classList.add("squish");
+      status.textContent = "Loading...";
 
-      input.disabled = true;
-      input.style.opacity = 0.3;
-      loadingBars.classList.remove("squish");
-
-      bars.forEach(bar => bar.style.width = "0%");
-      let barIndex = 0;
-
-      function fillNextBar() {
-        if (barIndex >= bars.length) {
-          loadingBars.classList.add("squish");
-          startCodeFlowAnimation(url);
-          return;
-        }
-        bars[barIndex].style.width = "100%";
-        barIndex++;
-        setTimeout(fillNextBar, 350);
-      }
-
-      fillNextBar();
-    }
-
-    function startCodeFlowAnimation(url) {
-      codeFlow.style.display = "block";
-      input.style.display = "none";
-      let index = 0;
-
-      codeFlow.textContent = "";
-      status.textContent = "Bypassing URL...";
-
-      codeFlowInterval = setInterval(() => {
-        if (index >= hackerPhrases.length) {
-          clearInterval(codeFlowInterval);
-          showFinalLoading(url);
-          return;
-        }
-        codeFlow.textContent += hackerPhrases[index++] + "\n";
-        codeFlow.scrollTop = codeFlow.scrollHeight;
-      }, 200);
-    }
-
-    function showFinalLoading(url) {
+      // Show final loading bar
       finalLoading.style.display = "block";
       finalLoadingFill.style.width = "0%";
-      setTimeout(() => finalLoadingFill.style.width = "100%", 100);
-      setTimeout(() => {
-        openIframeWindow(url);
-        resetUI();
-      }, 1800);
+
+      // Animate final loading bar fill
+      await new Promise((r) => {
+        finalLoadingFill.style.transition = "width 3s ease";
+        finalLoadingFill.style.width = "100%";
+        setTimeout(r, 3000);
+      });
+
+      // Redirect after loading
+      window.location.href = url;
     }
 
-    function openIframeWindow(url) {
-      const win = window.open("about:blank", "_blank");
-      if (!win) {
-        alert("Popup blocked. Allow popups for this site.");
+    // Open dev console prompt password and show console
+    function openDevConsole() {
+      if (consoleUnlocked) {
+        toggleDevConsole();
         return;
       }
-      win.document.write(`
-        <html><body style="margin:0;">
-        <iframe src="${url}" frameborder="0" style="width:100vw;height:100vh;"></iframe>
-        </body></html>
-      `);
+      const pass = prompt("Enter developer password:");
+      if (pass === decrypt(encryptedPass)) {
+        consoleUnlocked = true;
+        devConsole.style.display = "block";
+        devConsole.innerText += "[Console unlocked]\n";
+      } else {
+        alert("Incorrect password.");
+      }
     }
 
-    function resetUI() {
-      input.disabled = false;
-      input.style.opacity = 1;
-      input.style.display = "block";
-      input.value = "";
-      loadingBars.classList.remove("squish");
-      bars.forEach(bar => bar.style.width = "0%");
-      codeFlow.style.display = "none";
-      codeFlow.textContent = "";
-      finalLoading.style.display = "none";
-      finalLoadingFill.style.width = "0%";
-      status.textContent = "GoGard++";
-      input.focus();
+    // Toggle console visibility if unlocked
+    function toggleDevConsole() {
+      if (!consoleUnlocked) return;
+      devConsole.style.display = (devConsole.style.display === "none") ? "block" : "none";
     }
 
-    function expandInput() {
-      input.style.width = "85%";
-    }
-
-    function shrinkInput() {
-      input.style.width = "80%";
-    }
-
-    function openDevConsole() {
-      codeFlow.style.display = "block";
-      input.style.display = "none";
-      status.textContent = "Launching AI Assistant...";
-      codeFlow.textContent = "";
-      let devLogs = [
-        "[System] Initializing ChatGPT Overlay...",
-        "[Log] Injecting AI response engine...",
-        "[Debug] Setting up context memory...",
-        "[✔] AI assistant ready.",
-        "Type your commands below..."
-      ];
-      let i = 0;
-      let interval = setInterval(() => {
-        if (i >= devLogs.length) {
-          clearInterval(interval);
-          return;
+    // Ctrl + ` toggles dev console
+    document.addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.key === "`") {
+        if (!consoleUnlocked) {
+          openDevConsole();
+        } else {
+          toggleDevConsole();
         }
-        codeFlow.textContent += devLogs[i++] + "\n";
-        codeFlow.scrollTop = codeFlow.scrollHeight;
-      }, 300);
-    }
+      }
+    });
 
-    window.onload = () => {
-      input.focus();
+    // Override console.log to also print inside devConsole if unlocked
+    const oldLog = console.log;
+    console.log = function(...args) {
+      oldLog.apply(console, args);
+      if (consoleUnlocked) {
+        devConsole.innerText += args.join(" ") + "\n";
+        devConsole.scrollTop = devConsole.scrollHeight;
+      }
     };
+
+    // Initialize bars on page load
+    updateBars();
+
   </script>
 </body>
 </html>
