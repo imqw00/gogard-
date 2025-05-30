@@ -215,24 +215,6 @@
     #closePreset:hover {
       color: #00ff88;
     }
-
-    /* --- Dev Console --- */
-    #devConsole {
-      display: none;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      max-height: 200px;
-      background: #111;
-      color: #0f0;
-      font-family: monospace;
-      padding: 10px;
-      overflow-y: auto;
-      border-top: 2px solid #0f0;
-      z-index: 9999;
-      white-space: pre-wrap;
-    }
   </style>
 </head>
 <body>
@@ -284,9 +266,6 @@
     <div id="closePreset" onclick="closePresetModal()">Cancel</div>
   </div>
 
-  <!-- Dev Console -->
-  <div id="devConsole"></div>
-
   <script>
     // DOM elements
     const input = document.getElementById("urlInput");
@@ -307,100 +286,79 @@
     const finalLoadingFill = document.getElementById("finalLoadingFill");
     const presetModal = document.getElementById("presetModal");
     const presetList = document.getElementById("presetList");
-    const devConsole = document.getElementById("devConsole");
 
     const presetSites = [
       { name: "gamest1", url: "https://only-games.github.io/" },
       { name: "gamest2", url: "https://unblockedgames200.github.io/" },
       { name: "gamest3", url: "https://coolunblockedgames.github.io/" },
-      { name: "discord", url: "https://discord.com/app" },
-      { name: "youtube", url: "https://youtube.com" },
-      { name: "roblox", url: "https://roblox.com" },
-      { name: "reddit", url: "https://reddit.com" },
-      { name: "netflix", url: "https://netflix.com" }
+      { name: "gamest4", url: "https://unblocked-2025.github.io/" },
+      { name: "gamest5", url: "https://faf-games.github.io/" }
     ];
 
-    // Password for dev console (base64 encoded "letmein")
-    const encryptedPass = "bGV0bWVpbg==";
-    let consoleUnlocked = false;
+    const hackerPhrases = [
+      "bypassing GoGuard...",
+      "connecting to server...",
+      "initializing proxy...",
+      "decrypting data...",
+      "injecting payload...",
+      "scanning ports...",
+      "firewall disabled...",
+      "accessing darknet...",
+      "routing through VPN...",
+      "establishing secure tunnel...",
+      "uploading exploit...",
+      "masking IP address...",
+      "reconfiguring DNS...",
+      "spoofing credentials...",
+      "launching payload..."
+    ];
 
-    // Decrypt password helper
-    function decrypt(str) {
-      try {
-        return atob(str);
-      } catch (e) {
-        return "";
-      }
-    }
+    let codeFlowInterval;
 
-    // Update bars fill based on input length and domain presence
+    // Update loading bars on input change
     function updateBars() {
-      const val = input.value.toLowerCase();
+      const value = input.value.trim();
+      const hasProtocol = value.startsWith("http://") || value.startsWith("https://");
+      const hasValidDomain = fullDomains.some(domain => value.endsWith(domain));
 
-      // Calculate fill % based on length max 100%
-      let baseFill = Math.min(val.length * 8, 100);
-
-      // Check if input includes any full domain
-      const hasDomain = fullDomains.some(domain => val.includes(domain));
-      if (!hasDomain && val.length > 0) {
-        // Reduce fill if no valid domain
-        baseFill = Math.min(baseFill, 40);
+      for (let i = 0; i < bars.length; i++) {
+        if (hasProtocol && hasValidDomain) {
+          bars[i].style.width = "100%";
+        } else {
+          const base = Math.min(value.length / 50, 1) * 100;
+          bars[i].style.width = base * ((i + 1) / bars.length) + "%";
+        }
       }
-
-      // Fill bars in sequence with increments
-      bars.forEach((bar, i) => {
-        const fillVal = Math.min(baseFill - i * 20, 100);
-        bar.style.width = fillVal > 0 ? fillVal + "%" : "0%";
-      });
     }
 
-    // Expand input on focus
-    function expandInput() {
-      input.style.width = "95%";
-      input.style.transition = "width 0.3s ease";
+    // On Enter key pressed
+    function checkEnter(e) {
+      if (e.key === "Enter") startOpenSequence(input.value.trim());
     }
 
-    // Shrink input on blur
-    function shrinkInput() {
-      input.style.width = "80%";
-    }
-
-    // Check for Enter key press to trigger navigation or preset modal
-    function checkEnter(event) {
-      if (event.key === "Enter") {
-        event.preventDefault();
+    // Open preset modal when Tab is pressed with valid URL
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Tab") {
+        e.preventDefault();
         const val = input.value.trim();
-
-        if (val === "(ai)") {
-          openDevConsole();
-          return;
-        }
-
-        if (val === "presets") {
+        if ((val.startsWith("http://") || val.startsWith("https://")) && presetSites.length > 0) {
           openPresetModal();
-          return;
+        } else {
+          alert("Please type a valid full URL before viewing presets.");
         }
-
-        if (!val.startsWith("http")) {
-          alert("Please enter a full URL including http or https.");
-          return;
-        }
-
-        startLoadingSequence(val);
       }
-    }
+    });
 
-    // Open preset modal and fill with buttons
+    // Open preset modal and populate buttons
     function openPresetModal() {
       presetList.innerHTML = "";
       presetSites.forEach(site => {
-        const btn = document.createElement("button");
-        btn.textContent = site.name;
+        const btn = document.createElement("div");
         btn.className = "presetButton";
+        btn.textContent = site.name;
         btn.onclick = () => {
-          input.value = site.url;
           closePresetModal();
-          startLoadingSequence(site.url);
+          startOpenSequence(site.url);
         };
         presetList.appendChild(btn);
       });
@@ -412,72 +370,109 @@
       presetModal.style.display = "none";
     }
 
-    // Start loading sequence animation and final redirect
-    async function startLoadingSequence(url) {
-      loadingBars.classList.add("squish");
-      status.textContent = "Loading...";
-
-      // Show final loading bar
-      finalLoading.style.display = "block";
-      finalLoadingFill.style.width = "0%";
-
-      // Animate final loading bar fill
-      await new Promise((r) => {
-        finalLoadingFill.style.transition = "width 3s ease";
-        finalLoadingFill.style.width = "100%";
-        setTimeout(r, 3000);
-      });
-
-      // Redirect after loading
-      window.location.href = url;
-    }
-
-    // Open dev console prompt password and show console
-    function openDevConsole() {
-      if (consoleUnlocked) {
-        toggleDevConsole();
+    // Start the open sequence animations and actions
+    function startOpenSequence(url) {
+      if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        alert("Please enter a full URL starting with http:// or https://");
         return;
       }
-      const pass = prompt("Enter developer password:");
-      if (pass === decrypt(encryptedPass)) {
-        consoleUnlocked = true;
-        devConsole.style.display = "block";
-        devConsole.innerText += "[Console unlocked]\n";
-      } else {
-        alert("Incorrect password.");
-      }
-    }
 
-    // Toggle console visibility if unlocked
-    function toggleDevConsole() {
-      if (!consoleUnlocked) return;
-      devConsole.style.display = (devConsole.style.display === "none") ? "block" : "none";
-    }
+      input.disabled = true;
+      input.style.opacity = 0.3;
+      loadingBars.classList.remove("squish");
 
-    // Ctrl + ` toggles dev console
-    document.addEventListener("keydown", (e) => {
-      if (e.ctrlKey && e.key === "`") {
-        if (!consoleUnlocked) {
-          openDevConsole();
-        } else {
-          toggleDevConsole();
+      bars.forEach(bar => bar.style.width = "0%");
+      let barIndex = 0;
+
+      function fillNextBar() {
+        if (barIndex >= bars.length) {
+          loadingBars.classList.add("squish");
+          startCodeFlowAnimation(url);
+          return;
         }
+        bars[barIndex].style.width = "100%";
+        barIndex++;
+        setTimeout(fillNextBar, 350);
       }
-    });
 
-    // Override console.log to also print inside devConsole if unlocked
-    const oldLog = console.log;
-    console.log = function(...args) {
-      oldLog.apply(console, args);
-      if (consoleUnlocked) {
-        devConsole.innerText += args.join(" ") + "\n";
-        devConsole.scrollTop = devConsole.scrollHeight;
+      fillNextBar();
+    }
+
+    // Animate hacker style code flow text
+    function startCodeFlowAnimation(url) {
+      codeFlow.style.display = "block";
+      input.style.display = "none";
+      let index = 0;
+
+      codeFlow.textContent = "";
+      status.textContent = "Bypassing URL...";
+
+      codeFlowInterval = setInterval(() => {
+        if (index >= hackerPhrases.length) {
+          clearInterval(codeFlowInterval);
+          showFinalLoading(url);
+          return;
+        }
+        codeFlow.textContent += hackerPhrases[index++] + "\n";
+        codeFlow.scrollTop = codeFlow.scrollHeight;
+      }, 200);
+    }
+
+    // Show final loading bar animation
+    function showFinalLoading(url) {
+      finalLoading.style.display = "block";
+      finalLoadingFill.style.width = "0%";
+      setTimeout(() => finalLoadingFill.style.width = "100%", 100);
+      setTimeout(() => {
+        openIframeWindow(url);
+        resetUI();
+      }, 1800);
+    }
+
+    // Open URL inside a new window with iframe
+    function openIframeWindow(url) {
+      const win = window.open("about:blank", "_blank");
+      if (!win) {
+        alert("Popup blocked. Allow popups for this site.");
+        return;
       }
+      win.document.write(
+        <html><body style="margin:0;">
+        <iframe src="${url}" frameborder="0" style="width:100vw;height:100vh;"></iframe>
+        </body></html>
+      );
+    }
+
+    // Reset UI to initial state
+    function resetUI() {
+      input.disabled = false;
+      input.style.opacity = 1;
+      input.style.display = "block";
+      input.value = "";
+      loadingBars.classList.remove("squish");
+      bars.forEach(bar => bar.style.width = "0%");
+      codeFlow.style.display = "none";
+      codeFlow.textContent = "";
+      finalLoading.style.display = "none";
+      finalLoadingFill.style.width = "0%";
+      status.textContent = "GoGard++";
+      input.focus();
+    }
+
+    // Input width expand on focus
+    function expandInput() {
+      input.style.width = "85%";
+    }
+
+    // Input width shrink on blur
+    function shrinkInput() {
+      input.style.width = "80%";
+    }
+
+    // Focus input on page load
+    window.onload = () => {
+      input.focus();
     };
-
-    // Initialize bars on page load
-    updateBars();
-
   </script>
 </body>
 </html>
