@@ -1,463 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>GoGard++</title>
-  <style>
-    body {
-      margin: 0;
-      background-color: #0d0d0d;
-      color: #f2f2f2;
-      font-family: "Segoe UI", sans-serif;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      overflow: hidden;
-    }
-    .loading-bars {
-      display: flex;
-      gap: 5px;
-      padding: 10px;
-      margin: 0 10px;
-      user-select: none;
-      height: 20px;
-      align-items: center;
-      transition: all 0.3s ease;
-    }
-    .loading-bars.squish {
-      height: 6px;
-      margin: 0 10px 15px 10px;
-    }
-    .bar {
-      flex: 1;
-      background: #222;
-      border-radius: 3px;
-      overflow: hidden;
-      height: 100%;
-    }
-    .bar-fill {
-      height: 100%;
-      background: #0f0;
-      width: 0;
-      transition: width 0.3s ease;
-    }
-    .content {
-      text-align: center;
-      margin-bottom: 15px;
-      user-select: none;
-    }
-    #statusMessage {
-      font-weight: bold;
-      font-size: 1.4rem;
-      user-select: none;
-    }
-    .disclaimer {
-      font-size: 0.7rem;
-      color: #888;
-      user-select: none;
-      text-align: center;
-      margin-bottom: 10px;
-      padding: 0 15px;
-    }
-    .input-bar {
-      padding: 10px 15px;
-      user-select: none;
-      text-align: center;
-    }
-    input#urlInput {
-      width: 80%;
-      max-width: 600px;
-      padding: 10px;
-      font-size: 1rem;
-      border-radius: 5px;
-      border: none;
-      outline: none;
-      transition: width 0.3s ease;
-      background: #222;
-      color: #eee;
-    }
-    input#urlInput:hover, input#urlInput:focus {
-      background: #111;
-      color: #0f0;
-    }
-    #codeFlow {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: #000;
-      color: #0f0;
-      font-family: monospace;
-      font-size: 14px;
-      display: none;
-      z-index: 1000;
-      pointer-events: auto;
-      user-select: text;
-      padding: 20px;
-      white-space: pre-wrap;
-      overflow-y: auto;
-      box-sizing: border-box;
-    }
-    #finalLoading {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100vw;
-      height: 6px;
-      background: #222;
-      display: none;
-      z-index: 1100;
-    }
-    #finalLoadingFill {
-      height: 100%;
-      width: 0%;
-      background: #0f0;
-      transition: width 1.8s ease;
-    }
-    #presetModal {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0,0,0,0.8);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      user-select: none;
-    }
-    #presetModal h2 {
-      color: #0f0;
-      margin-bottom: 20px;
-    }
-    #presetList {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      max-width: 90vw;
-      justify-content: center;
-    }
-    .presetButton {
-      background: #222;
-      border: 1px solid #0f0;
-      padding: 10px 20px;
-      border-radius: 6px;
-      color: #0f0;
-      cursor: pointer;
-      user-select: none;
-      transition: background 0.3s ease;
-    }
-    .presetButton:hover {
-      background: #0f0;
-      color: #000;
-    }
-    #closePreset {
-      margin-top: 20px;
-      color: #0f0;
-      cursor: pointer;
-      user-select: none;
-      border: 1px solid #0f0;
-      padding: 6px 15px;
-      border-radius: 6px;
-      transition: background 0.3s ease;
-    }
-    #closePreset:hover {
-      background: #0f0;
-      color: #000;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tab Opener</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        #urlInput {
+            width: 80%;
+            padding: 10px;
+            margin: 20px;
+        }
+        #loadBar {
+            width: 0;
+            height: 5px;
+            background-color: green;
+            transition: width 0.5s;
+        }
+        #loadingContainer {
+            width: 80%;
+            background-color: grey;
+            margin: 20px;
+        }
+        #presetButtons {
+            margin: 20px;
+        }
+    </style>
 </head>
 <body>
+    <h1>Open Tabs with Iframe</h1>
+    <input type="text" id="urlInput" placeholder="Enter URL or select a preset">
+    <div id="loadingContainer">
+        <div id="loadBar"></div>
+    </div>
+    <div id="presetButtons"></div>
+    <script>
+        const presets = [
+            { name: "gamest1", url: "https://only-games.github.io/" },
+            { name: "gamest2", url: "https://unblockedgames200.github.io/" },
+            { name: "gamest3", url: "https://coolunblockedgames.github.io/" },
+            { name: "gamest4", url: "https://unblocked-2025.github.io/" },
+            { name: "gamest5", url: "https://faf-games.github.io/" }
+        ];
 
-  <div class="loading-bars" id="loadingBars">
-    <div class="bar"><div class="bar-fill" id="bar1"></div></div>
-    <div class="bar"><div class="bar-fill" id="bar2"></div></div>
-    <div class="bar"><div class="bar-fill" id="bar3"></div></div>
-    <div class="bar"><div class="bar-fill" id="bar4"></div></div>
-    <div class="bar"><div class="bar-fill" id="bar5"></div></div>
-  </div>
+        presets.forEach(preset => {
+            const button = document.createElement('button');
+            button.innerText = preset.name;
+            button.onclick = () => openTab(preset.url);
+            document.getElementById('presetButtons').appendChild(button);
+        });
 
-  <div class="content">
-    <div id="statusMessage">GoGard++</div>
-  </div>
+        function openTab(url) {
+            const password = prompt("Enter password:");
+            if (password === "aswdaswd") {
+                const iframe = document.createElement('iframe');
+                iframe.style.width = "100%";
+                iframe.style.height = "80vh";
+                iframe.src = url;
+                document.body.appendChild(iframe);
+                document.getElementById('urlInput').value = url;
+                loadBarAnimation();
+            } else {
+                alert("Incorrect password.");
+            }
+        }
 
-  <div class="disclaimer">This does not break any Glitch ToS, so please don't take down my project. Google Sites doesn't work so don't use it.</div>
+        function loadBarAnimation() {
+            const loadBar = document.getElementById('loadBar');
+            loadBar.style.width = "100%";
+            setTimeout(() => loadBar.style.width = "0", 1000);
+        }
 
-  <div class="input-bar">
-    <input
-      id="urlInput"
-      type="text"
-      placeholder="Enter a full URL like https://example.com"
-      oninput="updateBars()"
-      onfocus="expandInput()"
-      onblur="shrinkInput()"
-      onkeypress="checkEnter(event)"
-      autocomplete="off"
-      spellcheck="false"
-    />
-  </div>
+        document.getElementById('urlInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                openTab(this.value);
+            }
+        });
 
-  <pre id="codeFlow"></pre>
-
-  <div id="finalLoading">
-    <div id="finalLoadingFill"></div>
-  </div>
-
-  <div id="presetModal">
-    <h2>Choose a Preset Site</h2>
-    <div id="presetList"></div>
-    <div id="closePreset" onclick="closePresetModal()">Cancel</div>
-  </div>
-
-<script>
-  const input = document.getElementById("urlInput");
-  const status = document.getElementById("statusMessage");
-
-  const bars = [
-    document.getElementById("bar1"),
-    document.getElementById("bar2"),
-    document.getElementById("bar3"),
-    document.getElementById("bar4"),
-    document.getElementById("bar5"),
-  ];
-
-  const fullDomains = [".com", ".net", ".org", ".io", ".gov", ".edu", ".co", ".me"];
-  const loadingBars = document.getElementById("loadingBars");
-  const codeFlow = document.getElementById("codeFlow");
-  const finalLoading = document.getElementById("finalLoading");
-  const finalLoadingFill = document.getElementById("finalLoadingFill");
-  const presetModal = document.getElementById("presetModal");
-  const presetList = document.getElementById("presetList");
-
-  const presetSites = [
-    { name: "gamest1", url: "https://only-games.github.io/" },
-    { name: "gamest2", url: "https://unblockedgames200.github.io/" },
-    { name: "gamest3", url: "https://coolunblockedgames.github.io/" },
-    { name: "gamest4", url: "https://unblocked-2025.github.io/" },
-    { name: "gamest5", url: "https://faf-games.github.io/" }
-  ];
-
-  const hackerPhrases = [
-    "bypassing GoGuard...",
-    "connecting to server...",
-    "initializing proxy...",
-    "decrypting data...",
-    "injecting payload...",
-    "scanning ports...",
-    "firewall disabled...",
-    "accessing darknet...",
-    "routing through VPN...",
-    "establishing secure tunnel...",
-    "uploading exploit...",
-    "masking IP address...",
-    "reconfiguring DNS...",
-    "spoofing credentials...",
-    "launching payload..."
-  ];
-
-  let codeFlowInterval;
-
-  function updateBars() {
-    const value = input.value.trim();
-    const hasProtocol = value.startsWith("http://") || value.startsWith("https://");
-    const hasValidDomain = fullDomains.some(domain => value.endsWith(domain));
-
-    for (let i = 0; i < bars.length; i++) {
-      if (hasProtocol && hasValidDomain) {
-        bars[i].style.width = "100%";
-      } else {
-        const base = Math.min(value.length / 50, 1) * 100;
-        bars[i].style.width = base * ((i + 1) / bars.length) + "%";
-      }
-    }
-  }
-
-  function checkEnter(e) {
-    if (e.key === "Enter") {
-      const val = input.value.trim();
-      if (val === "(ai)") {
-        openDevConsole();
-        return;
-      }
-      startOpenSequence(val);
-    }
-  }
-
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Tab") {
-      e.preventDefault();
-      const val = input.value.trim();
-      if ((val.startsWith("http://") || val.startsWith("https://")) && presetSites.some(p => p.url.startsWith(val))) {
-        openPresetModal();
-      }
-    }
-  });
-
-  function expandInput() {
-    input.style.width = "90%";
-    loadingBars.classList.add("squish");
-  }
-
-  function shrinkInput() {
-    input.style.width = "80%";
-    loadingBars.classList.remove("squish");
-  }
-
-  function openDevConsole() {
-    if (codeFlow.style.display === "block") {
-      codeFlow.style.display = "none";
-      input.style.display = "inline-block";
-      loadingBars.style.display = "flex";
-      status.textContent = "GoGard++";
-      clearInterval(codeFlowInterval);
-    } else {
-      codeFlow.style.display = "block";
-      input.style.display = "none";
-      loadingBars.style.display = "none";
-      status.textContent = "GoGard++ - AI Mode";
-      runCodeFlow();
-    }
-  }
-
-  function runCodeFlow() {
-    let index = 0;
-    codeFlow.textContent = "";
-    codeFlowInterval = setInterval(() => {
-      if (index >= hackerPhrases.length) {
-        clearInterval(codeFlowInterval);
-        finalLoading.style.display = "block";
-        setTimeout(() => {
-          finalLoadingFill.style.width = "100%";
-        }, 100);
-        setTimeout(() => {
-          finalLoading.style.display = "none";
-          finalLoadingFill.style.width = "0%";
-          openIframeWindow(input.value.trim());
-          input.value = "";
-          resetUI();
-        }, 2000);
-        return;
-      }
-      codeFlow.textContent += hackerPhrases[index] + "\n";
-      codeFlow.scrollTop = codeFlow.scrollHeight;
-      index++;
-    }, 400);
-  }
-
-  function resetUI() {
-    codeFlow.style.display = "none";
-    input.style.display = "inline-block";
-    loadingBars.style.display = "flex";
-    status.textContent = "GoGard++";
-  }
-
-  function startOpenSequence(url) {
-    if (!url) return;
-    if (!(url.startsWith("http://") || url.startsWith("https://"))) {
-      status.textContent = "Please enter a valid URL with http:// or https://";
-      return;
-    }
-    openDevConsole();
-  }
-
-  function openIframeWindow(url) {
-    // Open a new tab with embedded iframe and styles
-    const newDoc = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <title>GoGard++ - Viewing: ${url}</title>
-  <style>
-    html, body {
-      margin: 0; padding: 0; height: 100%;
-      background: #000;
-      overflow: hidden;
-      user-select: none;
-      font-family: monospace, monospace;
-      color: #0f0;
-    }
-    #iframe {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      width: 100%;
-      height: 100%;
-      border: none;
-      user-select: none;
-      background: #000;
-    }
-    #header {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 36px;
-      background: #111;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 10px;
-      font-size: 16px;
-      color: #0f0;
-      user-select: none;
-      z-index: 1000;
-      box-sizing: border-box;
-    }
-    #closeButton {
-      cursor: pointer;
-      background: #0f0;
-      color: #000;
-      border: none;
-      padding: 3px 10px;
-      border-radius: 4px;
-      font-weight: bold;
-      user-select: none;
-    }
-  </style>
-</head>
-<body>
-  <div id="header">
-    <div>GoGard++ Proxy Viewer</div>
-    <button id="closeButton" title="Close">Close</button>
-  </div>
-  <iframe id="iframe" src="${url}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
-  <script>
-    document.getElementById('closeButton').onclick = () => window.close();
-  </script>
-</body>
-</html>
-`;
-    const newWin = window.open();
-    newWin.document.write(newDoc);
-    newWin.document.close();
-  }
-
-  // Preset Modal Functions
-
-  function openPresetModal() {
-    presetList.innerHTML = "";
-    presetSites.forEach(site => {
-      const btn = document.createElement("button");
-      btn.className = "presetButton";
-      btn.textContent = site.name;
-      btn.onclick = () => {
-        input.value = site.url;
-        closePresetModal();
-        updateBars();
-      };
-      presetList.appendChild(btn);
-    });
-    presetModal.style.display = "flex";
-  }
-
-  function closePresetModal() {
-    presetModal.style.display = "none";
-  }
-
-  // Initialize bars on load
-  updateBars();
-
-</script>
-
+        document.addEventListener('keydown', function (e) {
+            if (e.key === '`') {
+                const consoleInput = prompt("Enter JavaScript to inject:");
+                try {
+                    eval(consoleInput);
+                } catch (error) {
+                    alert("Error: " + error.message);
+                }
+            }
+        });
+    </script>
 </body>
 </html>
