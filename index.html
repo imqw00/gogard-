@@ -289,23 +289,161 @@
     if (e.key === "Tab") {
       e.preventDefault();
       const val = input.value.trim();
-      if ((val.startsWith("http://") || val.startsWith("https://")) && presetSites.length > 0) {
+      if ((val.startsWith("http://") || val.startsWith("https://")) && presetSites.some(p => p.url.startsWith(val))) {
         openPresetModal();
-      } else {
-        alert("Please type a valid full URL before viewing presets.");
       }
     }
   });
 
+  function expandInput() {
+    input.style.width = "90%";
+    loadingBars.classList.add("squish");
+  }
+
+  function shrinkInput() {
+    input.style.width = "80%";
+    loadingBars.classList.remove("squish");
+  }
+
+  function openDevConsole() {
+    if (codeFlow.style.display === "block") {
+      codeFlow.style.display = "none";
+      input.style.display = "inline-block";
+      loadingBars.style.display = "flex";
+      status.textContent = "GoGard++";
+      clearInterval(codeFlowInterval);
+    } else {
+      codeFlow.style.display = "block";
+      input.style.display = "none";
+      loadingBars.style.display = "none";
+      status.textContent = "GoGard++ - AI Mode";
+      runCodeFlow();
+    }
+  }
+
+  function runCodeFlow() {
+    let index = 0;
+    codeFlow.textContent = "";
+    codeFlowInterval = setInterval(() => {
+      if (index >= hackerPhrases.length) {
+        clearInterval(codeFlowInterval);
+        finalLoading.style.display = "block";
+        setTimeout(() => {
+          finalLoadingFill.style.width = "100%";
+        }, 100);
+        setTimeout(() => {
+          finalLoading.style.display = "none";
+          finalLoadingFill.style.width = "0%";
+          openIframeWindow(input.value.trim());
+          input.value = "";
+          resetUI();
+        }, 2000);
+        return;
+      }
+      codeFlow.textContent += hackerPhrases[index] + "\n";
+      codeFlow.scrollTop = codeFlow.scrollHeight;
+      index++;
+    }, 400);
+  }
+
+  function resetUI() {
+    codeFlow.style.display = "none";
+    input.style.display = "inline-block";
+    loadingBars.style.display = "flex";
+    status.textContent = "GoGard++";
+  }
+
+  function startOpenSequence(url) {
+    if (!url) return;
+    if (!(url.startsWith("http://") || url.startsWith("https://"))) {
+      status.textContent = "Please enter a valid URL with http:// or https://";
+      return;
+    }
+    openDevConsole();
+  }
+
+  function openIframeWindow(url) {
+    // Open a new tab with embedded iframe and styles
+    const newDoc = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>GoGard++ - Viewing: ${url}</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      background: #000;
+      overflow: hidden;
+      user-select: none;
+      font-family: monospace, monospace;
+      color: #0f0;
+    }
+    #iframe {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      user-select: none;
+      background: #000;
+    }
+    #header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 36px;
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      font-size: 16px;
+      color: #0f0;
+      user-select: none;
+      z-index: 1000;
+      box-sizing: border-box;
+    }
+    #closeButton {
+      cursor: pointer;
+      background: #0f0;
+      color: #000;
+      border: none;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-weight: bold;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="header">
+    <div>GoGard++ Proxy Viewer</div>
+    <button id="closeButton" title="Close">Close</button>
+  </div>
+  <iframe id="iframe" src="${url}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+  <script>
+    document.getElementById('closeButton').onclick = () => window.close();
+  </script>
+</body>
+</html>
+`;
+    const newWin = window.open();
+    newWin.document.write(newDoc);
+    newWin.document.close();
+  }
+
+  // Preset Modal Functions
+
   function openPresetModal() {
     presetList.innerHTML = "";
     presetSites.forEach(site => {
-      const btn = document.createElement("div");
+      const btn = document.createElement("button");
       btn.className = "presetButton";
       btn.textContent = site.name;
       btn.onclick = () => {
+        input.value = site.url;
         closePresetModal();
-        startOpenSequence(site.url);
+        updateBars();
       };
       presetList.appendChild(btn);
     });
@@ -316,221 +454,10 @@
     presetModal.style.display = "none";
   }
 
-  function startOpenSequence(url) {
-    if (!url.startsWith("http://") && !url.startsWith("https://")) {
-      alert("Please enter a full URL starting with http:// or https://");
-      return;
-    }
+  // Initialize bars on load
+  updateBars();
 
-    input.disabled = true;
-    input.style.opacity = 0.3;
-    loadingBars.classList.remove("squish");
-
-    bars.forEach(bar => bar.style.width = "0%");
-    let barIndex = 0;
-
-    function fillNextBar() {
-      if (barIndex >= bars.length) {
-        loadingBars.classList.add("squish");
-        startCodeFlowAnimation(url);
-        return;
-      }
-      bars[barIndex].style.width = "100%";
-      barIndex++;
-      setTimeout(fillNextBar, 350);
-    }
-
-    fillNextBar();
-  }
-
-  function startCodeFlowAnimation(url) {
-    codeFlow.style.display = "block";
-    input.style.display = "none";
-    status.textContent = "Bypassing URL...";
-
-    codeFlow.textContent = "";
-    let index = 0;
-
-    codeFlowInterval = setInterval(() => {
-      if (index >= hackerPhrases.length) {
-        clearInterval(codeFlowInterval);
-        showFinalLoading(url);
-        return;
-      }
-      codeFlow.textContent += hackerPhrases[index++] + "\n";
-      codeFlow.scrollTop = codeFlow.scrollHeight;
-    }, 200);
-  }
-
-  function showFinalLoading(url) {
-    finalLoading.style.display = "block";
-    finalLoadingFill.style.width = "0%";
-    setTimeout(() => finalLoadingFill.style.width = "100%", 100);
-    setTimeout(() => {
-      openIframeWindow(url);
-      resetUI();
-    }, 1800);
-  }
-
-  function openIframeWindow(url) {
-    const win = window.open("about:blank", "_blank");
-    if (!win) {
-      alert("Popup blocked. Allow popups for this site.");
-      return;
-    }
-
-    // Write basic HTML with iframe and console overlay in the new window
-    const newDoc = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <title>GoGard++ - Embedded</title>
-        <style>
-          html, body {
-            margin: 0; padding: 0; height: 100%;
-            background: #000;
-            overflow: hidden;
-            font-family: monospace;
-            color: #0f0;
-          }
-          iframe {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw;
-            height: 100vh;
-            border: none;
-            z-index: 0;
-          }
-          #codeFlow {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0,0,0,0.95);
-            color: #0f0;
-            font-family: monospace;
-            font-size: 14px;
-            display: none;
-            z-index: 10000;
-            pointer-events: auto;
-            user-select: text;
-            padding: 20px;
-            white-space: pre-wrap;
-            overflow-y: auto;
-            box-sizing: border-box;
-          }
-          #codeInput {
-            position: fixed;
-            bottom: 0; left: 0;
-            width: 100vw;
-            box-sizing: border-box;
-            padding: 10px;
-            background: #111;
-            border: none;
-            color: #0f0;
-            font-family: monospace;
-            font-size: 16px;
-            outline: none;
-            z-index: 10001;
-            display: none;
-          }
-        </style>
-      </head>
-      <body>
-        <iframe src="${url}"></iframe>
-        <pre id="codeFlow"></pre>
-        <input id="codeInput" type="text" placeholder="Type JavaScript here and press Enter (console)"/>
-
-        <script>
-          const codeFlow = document.getElementById('codeFlow');
-          const codeInput = document.getElementById('codeInput');
-          let consoleHistory = [];
-
-          // Toggle console overlay on Ctrl+~
-          window.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.key === '`') {
-              if (codeFlow.style.display === 'block') {
-                codeFlow.style.display = 'none';
-                codeInput.style.display = 'none';
-              } else {
-                codeFlow.style.display = 'block';
-                codeInput.style.display = 'block';
-                codeInput.focus();
-              }
-            }
-          });
-
-          codeInput.addEventListener('keydown', e => {
-            if (e.key === 'Enter') {
-              const code = codeInput.value.trim();
-              if (!code) return;
-              codeFlow.textContent += '> ' + code + '\\n';
-              try {
-                const result = eval(code);
-                codeFlow.textContent += '< ' + result + '\\n';
-              } catch (err) {
-                codeFlow.textContent += '< Error: ' + err.message + '\\n';
-              }
-              codeFlow.scrollTop = codeFlow.scrollHeight;
-              consoleHistory.push(code);
-              codeInput.value = '';
-            }
-          });
-        </script>
-      </body>
-      </html>
-    `;
-
-    win.document.open();
-    win.document.write(newDoc);
-    win.document.close();
-  }
-
-  function resetUI() {
-    input.disabled = false;
-    input.style.opacity = 1;
-    input.style.display = "block";
-    input.value = "";
-    loadingBars.classList.remove("squish");
-    bars.forEach(bar => bar.style.width = "0%");
-    codeFlow.style.display = "none";
-    codeFlow.textContent = "";
-    finalLoading.style.display = "none";
-    finalLoadingFill.style.width = "0%";
-    status.textContent = "GoGard++";
-    input.focus();
-  }
-
-  function expandInput() {
-    input.style.width = "85%";
-  }
-
-  function shrinkInput() {
-    input.style.width = "80%";
-  }
-
-  function openDevConsole() {
-    codeFlow.style.display = "block";
-    input.style.display = "none";
-    status.textContent = "Launching AI Assistant...";
-    codeFlow.textContent = "";
-    let devLogs = [
-      "Initializing AI assistant...",
-      "Connecting to GPT servers...",
-      "AI assistant ready.",
-      "Type your queries below.",
-    ];
-    let idx = 0;
-    const interval = setInterval(() => {
-      if (idx >= devLogs.length) {
-        clearInterval(interval);
-        return;
-      }
-      codeFlow.textContent += devLogs[idx++] + "\\n";
-      codeFlow.scrollTop = codeFlow.scrollHeight;
-    }, 400);
-  }
 </script>
+
 </body>
 </html>
